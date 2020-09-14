@@ -3,3 +3,5 @@ aurocConfig
 *.zip
 .ipynb_checkpoints
 papers
+__pycache__
+.idea
