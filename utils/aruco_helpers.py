@@ -79,3 +79,13 @@ class Ray:
         # Get the middle of the line
         x, y = self.starting_pos
         return y, x + int(self.width / 2)
+
+
+# Helper function to transform points from 3D to 2D given camera parameters, t vector and r vector
+def get_2d_points(camera_params, tvec, rvec, distortion=None):
+    if distortion is None:
+        distortion = np.array([0, 0, 0, 0, 0], dtype=np.float32)
+    point_3d = np.array([0, 0, 0], dtype=np.float32)
+    point = cv2.projectPoints(np.array([[point_3d]]), rvec, tvec, camera_params, distortion)
+    x, y = tuple(point[0][0][0])
+    return int(x), int(y)
