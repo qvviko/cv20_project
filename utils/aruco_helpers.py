@@ -20,6 +20,22 @@ def tune_tvector(marker_map, lower):
     return vector
 
 
+# Helper function
+# Given the marker map and location of the center of the box, computers the 3D position of the center of the box
+def get_center_box_pos(mmap, center_location):
+    rt_matrix = mmap.getRTMatrix()[:-1, :]  # Q|t matrix
+    vector_3D = rt_matrix @ np.append(center_location, 1)  # [Q|t] * homogeneous_center_box
+    return vector_3D
+
+
+# Helper function
+# Given the location of the 3D vector and camera matrix, calculates the location in the image
+# Returns x and y
+def get_2d_from_3d(vector_3d, camera_matrix):
+    d2 = camera_matrix @ vector_3d  # Camera matrix * vector_3d
+    return int(d2[0] / d2[-1]), int(d2[1] / d2[-1])
+
+
 # Init a new marker detector and two pose trackers
 def get_new_MM_posers(camera_parameters, mmap_low, mmap_high):
     low_pose = aruco.MarkerMapPoseTracker()
