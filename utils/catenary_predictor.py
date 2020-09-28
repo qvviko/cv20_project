@@ -31,7 +31,7 @@ class CatenaryPredictor:
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=1000, factor=0.80)
 
     # Fit the catenary
-    def solve(self, iters=10000):
+    def solve(self, iters=10000, verbosity=1000):
         # Used for early stopping
         prev_loss = 0  # Save previous loss
         patience = 0  # how many times losses have been the same
@@ -43,7 +43,7 @@ class CatenaryPredictor:
             ys = lsq_catenary(self.x, self.a, self.b, self.c)
             # Calculate how different the ys are
             loss = lsq_loss(self.y, ys, self.error_func)
-            if i % 5000 == 0:
+            if i % verbosity == 0:
                 print(f'Epoch {i}. Loss {loss}')
 
             if loss == prev_loss:  # If losses were the same, increase counter
