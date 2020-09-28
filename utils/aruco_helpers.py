@@ -3,23 +3,6 @@ import cv2
 import numpy as np
 
 
-# Tune translation vector for the boxes
-# Receives marker map and lower - which determines if it's a lower arUco box or not
-def tune_tvector(marker_map, lower):
-    vector = marker_map.getTvec().copy()
-    if len(vector) == 0:
-        return vector
-    if lower:
-        vector[0][0] += 0.05
-        vector[1][0] += 0.015
-        vector[2][0] += 0.05
-    else:
-        vector[0][0] -= 0.05
-        vector[1][0] -= 0.02
-        vector[2][0] -= 0.05
-    return vector
-
-
 # Helper function
 # Given the marker map and location of the center of the box, computers the 3D position of the center of the box
 def get_center_box_pos(mmap, center_location):
@@ -105,3 +88,54 @@ def get_2d_points(camera_params, tvec, rvec, distortion=None):
     point = cv2.projectPoints(np.array([[point_3d]]), rvec, tvec, camera_params, distortion)
     x, y = tuple(point[0][0][0])
     return int(x), int(y)
+
+
+# Helper function
+# Given the image and initial coordinate of x and y on the image
+# try to find y that will be in the middle of the line
+def get_middle_y(img, x, y):
+    dynamic_y = y
+    # Firstly, measure the number of white pixels from the top
+    while img[dynamic_y, x] == 255:
+        dynamic_y += 1
+    height_below = dynamic_y - y
+
+    dynamic_y = y
+    # Then measure number of nwhite pixels on the bottom
+    while img[dynamic_y, x] == 255:
+        dynamic_y -= 1
+    height_above = y - dynamic_y
+
+    # Calculate mean
+    mean = int((height_below + height_above) / 2)
+
+    # Adjust the y location, so that the number of white pixels at the top and at the bottom is the same
+    return y - (height_above - mean)
+
+
+# Collect points along the line, given the location of the middle of the line
+def find_points(img, middle):
+    x, y = middle
+    h, w = img.shape
+    xs = [x]
+    ys = [y]
+
+    # Go to through right direction until there is no cable
+    tmp_x = x + 1
+    tmp_y = y
+    while w > tmp_x and h > tmp_y and img[tmp_y, tmp_x] == 255:
+        tmp_y = get_middle_y(img, tmp_x, tmp_y)  # Adjust y to be in the middle
+        xs.append(tmp_x)
+        ys.append(tmp_y)
+        tmp_x += 1
+
+    # Go throught the left direction until there is no cable
+    tmp_x = x - 1
+    tmp_y = y
+    while w > tmp_x and h > tmp_y and img[tmp_y, tmp_x] == 255:
+        tmp_y = get_middle_y(img, tmp_x, tmp_y)  # Adjust y to be in the middle
+        xs.append(tmp_x)
+        ys.append(tmp_y)
+        tmp_x -= 1
+
+    return xs, ys
